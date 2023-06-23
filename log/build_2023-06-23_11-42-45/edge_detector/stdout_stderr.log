@@ -1,0 +1,37 @@
+running egg_info
+creating ../build/edge_detector/edge_detector.egg-info
+writing ../build/edge_detector/edge_detector.egg-info/PKG-INFO
+writing dependency_links to ../build/edge_detector/edge_detector.egg-info/dependency_links.txt
+writing entry points to ../build/edge_detector/edge_detector.egg-info/entry_points.txt
+writing requirements to ../build/edge_detector/edge_detector.egg-info/requires.txt
+writing top-level names to ../build/edge_detector/edge_detector.egg-info/top_level.txt
+writing manifest file '../build/edge_detector/edge_detector.egg-info/SOURCES.txt'
+reading manifest file '../build/edge_detector/edge_detector.egg-info/SOURCES.txt'
+writing manifest file '../build/edge_detector/edge_detector.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/ashmit/major_project/build/edge_detector/build
+creating /home/ashmit/major_project/build/edge_detector/build/lib
+creating /home/ashmit/major_project/build/edge_detector/build/lib/edge_detector
+copying edge_detector/__init__.py -> /home/ashmit/major_project/build/edge_detector/build/lib/edge_detector
+copying edge_detector/edge_detector.py -> /home/ashmit/major_project/build/edge_detector/build/lib/edge_detector
+running install
+/usr/lib/python3/dist-packages/setuptools/command/install.py:34: SetuptoolsDeprecationWarning: setup.py install is deprecated. Use build and pip and other standards-based tools.
+  warnings.warn(
+running install_lib
+creating /home/ashmit/major_project/install/edge_detector/lib/python3.10/site-packages/edge_detector
+copying /home/ashmit/major_project/build/edge_detector/build/lib/edge_detector/__init__.py -> /home/ashmit/major_project/install/edge_detector/lib/python3.10/site-packages/edge_detector
+copying /home/ashmit/major_project/build/edge_detector/build/lib/edge_detector/edge_detector.py -> /home/ashmit/major_project/install/edge_detector/lib/python3.10/site-packages/edge_detector
+byte-compiling /home/ashmit/major_project/install/edge_detector/lib/python3.10/site-packages/edge_detector/__init__.py to __init__.cpython-310.pyc
+byte-compiling /home/ashmit/major_project/install/edge_detector/lib/python3.10/site-packages/edge_detector/edge_detector.py to edge_detector.cpython-310.pyc
+running install_data
+creating /home/ashmit/major_project/install/edge_detector/share/ament_index
+creating /home/ashmit/major_project/install/edge_detector/share/ament_index/resource_index
+creating /home/ashmit/major_project/install/edge_detector/share/ament_index/resource_index/packages
+copying resource/edge_detector -> /home/ashmit/major_project/install/edge_detector/share/ament_index/resource_index/packages
+copying package.xml -> /home/ashmit/major_project/install/edge_detector/share/edge_detector
+running install_egg_info
+Copying ../build/edge_detector/edge_detector.egg-info to /home/ashmit/major_project/install/edge_detector/lib/python3.10/site-packages/edge_detector-0.0.0-py3.10.egg-info
+running install_scripts
+Installing processor script to /home/ashmit/major_project/install/edge_detector/lib/edge_detector
+writing list of installed files to '/home/ashmit/major_project/build/edge_detector/install.log'
