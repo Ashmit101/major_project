@@ -1,11 +1,16 @@
 import cv2
+import os
+import pkg_resources
 import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from your_package.msg import CustomMessage
+from std_msgs.msg import String, Float64MultiArray
+from builtin_interfaces.msg import Time
+from ament_index_python.packages import get_package_share_directory
 
+PACKAGE_NAME = 'person_detector'
 
 class ObjectDetectionNode(Node):
 
@@ -21,11 +26,14 @@ class ObjectDetectionNode(Node):
         self.subscription
 
         self.publisher_ = self.create_publisher(
-            CustomMessage,
+            Float64MultiArray,
             'object_detect', 
             10)
         
+        
         self.bridge= CvBridge()
+
+        self.yolocfg, self.yoloweights, self.yolotxt = self.access_yolov3_files()
 
 
     def image_callback(self, msg):
@@ -36,14 +44,16 @@ class ObjectDetectionNode(Node):
         Height = image.shape[0]
         scale = 0.00392
 
+        timestamp = msg.header.stamp
+
         # read class names, here only person is stored
         classes = None
-        with open('yolov3.txt', 'r') as f:
+        with open(self.yolotxt, 'r') as f:
              classes = [line.strip() for line in f.readlines()]
 
 
         # read pre-trained model and config file
-        net = cv2.dnn.readNet('yolov3.weights', 'yolov3.cfg')
+        net = cv2.dnn.readNet(self.yoloweights, self.yolocfg)
 
         # create input blob 
         blob = cv2.dnn.blobFromImage(image, scale, (416,416), (0,0,0), True, crop=False)
@@ -117,21 +127,39 @@ class ObjectDetectionNode(Node):
 
         # determines the coordinates of the bbox
         print("Location of the Person:")
-        for box in bounding_boxes:
-            box
+        
+        if bounding_boxes:
+            coordinates=Float64MultiArray()
+            for box in bounding_boxes:
+                coordinates.data.extend(box)
+            timestamp_sec = timestamp.sec + timestamp.nanosec * 1e-9
+
+            coordinates.data.append(timestamp_sec)
+            self.publisher_.publish(coordinates)
 
    
-        cv2.imshow("object detection", image)
-        cv2.waitKey()
-        cv2.imwrite("object-detection.jpg", image)
-        cv2.destroyAllWindows()
+        # cv2.imshow("object detection", image)
+        # cv2.waitKey()
+        # cv2.imwrite("object-detection.jpg", image)
+        # cv2.destroyAllWindows()
+       
+        # msg=String()
+        # msg.data=box
+        # msg1=timestamp()
+        # sec=msg1.sec
+        # nanosec=msg1.nanosec
+        # self.publisher.publish(msg, sec, nanosec)
 
-        custom_msg = CustomMessage()
-        custom_msg.image=image
-        custom_msg.string_data=box
+    def access_yolov3_files(self):
+        # Get the path to the yolov3 directory using pkg_resources
+        package_share_directory = get_package_share_directory('person_detector')
+        yolov3_dir = os.path.join(package_share_directory, 'yolov3')
+        # Access the yolov3 files using their relative paths
+        cfg_file = os.path.join(yolov3_dir, 'yolov3.cfg')
+        weights_file = os.path.join(yolov3_dir, 'yolov3.weights')
+        names_file = os.path.join(yolov3_dir, 'yolov3.txt')
 
-        self.publisher.publish(custom_msg)
-
+        return cfg_file, weights_file, names_file
 
 
 def main(args=None):
