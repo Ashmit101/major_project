@@ -132,7 +132,9 @@ class ObjectDetectionNode(Node):
             coordinates=Float64MultiArray()
             for box in bounding_boxes:
                 coordinates.data.extend(box)
-            coordinates.data.append(timestamp.to_sec())
+            timestamp_sec = timestamp.sec + timestamp.nanosec * 1e-9
+
+            coordinates.data.append(timestamp_sec)
             self.publisher_.publish(coordinates)
 
    
