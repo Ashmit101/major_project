@@ -15,11 +15,12 @@ setup(
     zip_safe=True,
     maintainer='infinite-tea',
     maintainer_email='076bei029.rujal@pcampus.edu.np',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Extract feature from the person detected',
+    license='Apache License 2.0',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'feature_extraction = feature_extraction.feature_extraction:main'
         ],
     },
 )
