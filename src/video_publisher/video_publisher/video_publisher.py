@@ -5,14 +5,21 @@ import pkg_resources
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-# import time
-
-# init_time = 0
+from std_msgs.msg import String, Float64MultiArray
 
 class VideoPublisher(Node):
     def __init__(self, input_source):
         super().__init__('video_publisher')
         self.publisher_ = self.create_publisher(Image, 'video_frame', 10)
+
+        self.subscription = self.create_subscription(
+            Float64MultiArray,
+            'object_detect',
+            self.listener_callback,
+            10
+        )
+
+        self.subscription
         
         self.bridge_ = CvBridge()
 
@@ -23,6 +30,20 @@ class VideoPublisher(Node):
 
         if self.video_capture.isOpened():
             self.timer_ = self.create_timer(0.1, self.publish_frame)
+
+    def listener_callback(self, msg):
+        # Process received message
+        data = msg.data
+        timestamp_sec = data[-1]
+        data = data[:-1]
+        # Process the remaining data (bounding boxes)
+        bounding_boxes = [list(data[i:i+4]) for i in range(0, len(data), 4)]
+    
+        # Do something with the bounding boxes and timestamp
+        # For example, print them
+        self.get_logger().info(f'Received bounding boxes: {bounding_boxes}')
+        self.get_logger().info(f'Received timestamp: {timestamp_sec}')
+
 
     def publish_frame(self):
 
