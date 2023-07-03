@@ -6,6 +6,8 @@ import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from std_msgs.msg import String, Float64MultiArray
+import base64
+import json
 
 class VideoPublisher(Node):
     def __init__(self, input_source):
@@ -77,7 +79,21 @@ class VideoPublisher(Node):
                 break
             i = i + 1
 
-        
+    def convert_image_to_json(self, image, bboxes):
+        # Convert image to Base64
+        _, img_encoded = cv2.imencode('.jpg', image)
+        img_base64 = base64.b64encode(img_encoded).decode('utf-8')
+
+        # Create JSON payload
+        payload = {
+            'image': img_base64,
+            'bounding_box': bboxes
+        }
+
+        # Convert payload to JSON string
+        json_payload = json.dumps(payload)
+
+        return json_payload        
 
 def choose_input_source():
     valid_choices = ['0', '1']
