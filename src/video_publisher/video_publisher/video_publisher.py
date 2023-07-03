@@ -20,6 +20,8 @@ class VideoPublisher(Node):
         )
 
         self.subscription
+
+        self.frame_list = [] # To store frames for later processing
         
         self.bridge_ = CvBridge()
 
@@ -32,17 +34,13 @@ class VideoPublisher(Node):
             self.timer_ = self.create_timer(0.1, self.publish_frame)
 
     def listener_callback(self, msg):
-        # Process received message
+        
         data = msg.data
         timestamp_sec = data[-1]
         data = data[:-1]
         # Process the remaining data (bounding boxes)
         bounding_boxes = [list(data[i:i+4]) for i in range(0, len(data), 4)]
-    
-        # Do something with the bounding boxes and timestamp
-        # For example, print them
-        self.get_logger().info(f'Received bounding boxes: {bounding_boxes}')
-        self.get_logger().info(f'Received timestamp: {timestamp_sec}')
+        self.display_frame_with_bbox(bounding_boxes, timestamp_sec)
 
 
     def publish_frame(self):
@@ -54,7 +52,32 @@ class VideoPublisher(Node):
             msg = self.bridge_.cv2_to_imgmsg(frame, encoding='bgr8')
             # curr_time = time.time() - init_time
             msg.header.stamp = self.get_clock().now().to_msg()
+            self.frame_list.append(msg) # Store the frame to the queue
             self.publisher_.publish(msg)
+
+    def display_frame_with_bbox(self, coordinates, timestamp):
+
+        i = 0
+        for frame in self.frame_list:
+            frame_timestamp = frame.header.stamp
+            frame_timestamp = frame_timestamp.sec + frame_timestamp.nanosec * 1e-9
+
+            if timestamp == frame_timestamp:
+                frame_cv = self.bridge_.imgmsg_to_cv2(frame, 'bgr8')
+
+                # Draw the bounding box on the frame
+                for box in coordinates:
+                    x1, y1, x2, y2 = box
+                    cv2.rectangle(frame_cv, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+
+                # Display the frame with the bounding box
+                cv2.imshow('Frame with Bounding Box', frame_cv)
+                cv2.waitKey(1)
+                self.frame_list = self.frame_list[i+1:]
+                break
+            i = i + 1
+
+        
 
 def choose_input_source():
     valid_choices = ['0', '1']
