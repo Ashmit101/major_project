@@ -5,6 +5,9 @@ import pkg_resources
 import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+# import time
+
+# init_time = 0
 
 class VideoPublisher(Node):
     def __init__(self, input_source):
@@ -28,6 +31,8 @@ class VideoPublisher(Node):
             cv2.imshow('Input from the camera', frame)
             cv2.waitKey(1)
             msg = self.bridge_.cv2_to_imgmsg(frame, encoding='bgr8')
+            # curr_time = time.time() - init_time
+            msg.header.stamp = self.get_clock().now().to_msg()
             self.publisher_.publish(msg)
 
 def choose_input_source():
@@ -46,6 +51,9 @@ def choose_input_source():
 def main(args=None):
     
     input_source = choose_input_source()
+
+    # global init_time
+    # init_time = time.time()
 
     if input_source == '1':
         input_source = input("Enter complete path of the video file:")
