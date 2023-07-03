@@ -43,7 +43,7 @@ class ObjectDetectionNode(Node):
         Width = image.shape[1]
         Height = image.shape[0]
         scale = 0.00392
-
+        print(msg.header.stamp)
         timestamp = msg.header.stamp
 
         # read class names, here only person is stored
@@ -126,22 +126,16 @@ class ObjectDetectionNode(Node):
         draw_bounding_box(image, class_ids[i], confidences[i], round(x), round(y), round(x+w), round(y+h))
 
         # determines the coordinates of the bbox
-        print("Location of the Person:")
         
         if bounding_boxes:
             coordinates=Float64MultiArray()
             for box in bounding_boxes:
                 coordinates.data.extend(box)
             timestamp_sec = timestamp.sec + timestamp.nanosec * 1e-9
-
+            print(timestamp)
             coordinates.data.append(timestamp_sec)
             self.publisher_.publish(coordinates)
 
-   
-        # cv2.imshow("object detection", image)
-        # cv2.waitKey()
-        # cv2.imwrite("object-detection.jpg", image)
-        # cv2.destroyAllWindows()
        
         # msg=String()
         # msg.data=box
