@@ -10,18 +10,30 @@ import base64
 import json
 
 class VideoPublisher(Node):
+
+
+
     def __init__(self, input_source):
         super().__init__('video_publisher')
+        self.using_rgbd = False # Not using RGB-D by default
+
         self.publisher_ = self.create_publisher(Image, 'video_frame', 10)
 
-        self.subscription = self.create_subscription(
+        self.bbox_subscription = self.create_subscription(
             Float64MultiArray,
             'object_detect',
             self.listener_callback,
             10
         )
+        self.bbox_subscription
 
-        self.subscription
+        self.rgbd_subscription = self.create_subscription(
+            Image,
+            '/camera/color/image_raw',
+            self.rgbd_callback,
+            10
+        )
+        self.rgbd_subscription
 
         self.frame_list = [] # To store frames for later processing
         
@@ -29,11 +41,13 @@ class VideoPublisher(Node):
 
         if input_source == '0':
             input_source = 0
+        elif input_source == '2':
+            self.using_rgbd = True
 
-        self.video_capture = cv2.VideoCapture(input_source)
-
-        if self.video_capture.isOpened():
-            self.timer_ = self.create_timer(0.1, self.publish_frame)
+        if not self.using_rgbd:
+            self.video_capture = cv2.VideoCapture(input_source)
+            if self.video_capture.isOpened():
+                self.timer_ = self.create_timer(0.1, self.publish_frame)
 
     def listener_callback(self, msg):
         
@@ -44,15 +58,24 @@ class VideoPublisher(Node):
         bounding_boxes = [list(data[i:i+4]) for i in range(0, len(data), 4)]
         self.display_frame_with_bbox(bounding_boxes, timestamp_sec)
 
+    def rgbd_callback(self, image):
+        self.publish_frame(image) # Just publisht the frame received from RGB-D camera
 
-    def publish_frame(self):
-
-        ret, frame = self.video_capture.read()
-        if ret:
-            cv2.imshow('Input from the camera', frame)
+    def publish_frame(self, msg=None):
+        if msg is None:
+            ret, frame = self.video_capture.read()
+            if ret:
+                cv2.imshow('Input from the camera', frame)
+                cv2.waitKey(1)
+                msg = self.bridge_.cv2_to_imgmsg(frame, encoding='bgr8')
+                # curr_time = time.time() - init_time
+                msg.header.stamp = self.get_clock().now().to_msg()
+                self.frame_list.append(msg) # Store the frame to the queue
+                self.publisher_.publish(msg)
+        else:
+            frame = self.bridge_.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            cv2.imshow('Input from the RGB-D', frame)
             cv2.waitKey(1)
-            msg = self.bridge_.cv2_to_imgmsg(frame, encoding='bgr8')
-            # curr_time = time.time() - init_time
             msg.header.stamp = self.get_clock().now().to_msg()
             self.frame_list.append(msg) # Store the frame to the queue
             self.publisher_.publish(msg)
@@ -96,12 +119,13 @@ class VideoPublisher(Node):
         return json_payload        
 
 def choose_input_source():
-    valid_choices = ['0', '1']
+    valid_choices = ['0', '1', '2']
 
     while True:
         choice = input("Choose an input source: \n" +
-        "0. Camera\n" + 
-        "1. Video\n")
+        "0. Normal Camera\n" + 
+        "1. Video\n" +
+        "2. RGB-D Camera")
 
         if choice in valid_choices:
             return choice.lower()
@@ -111,9 +135,6 @@ def choose_input_source():
 def main(args=None):
     
     input_source = choose_input_source()
-
-    # global init_time
-    # init_time = time.time()
 
     if input_source == '1':
         input_source = input("Enter complete path of the video file:")
