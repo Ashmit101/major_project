@@ -3,11 +3,12 @@ from rclpy.node import Node
 import os
 import pkg_resources
 import cv2
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, PointCloud2
 from cv_bridge import CvBridge
 from std_msgs.msg import String, Float64MultiArray
 import base64
 import json
+import math
 
 class VideoPublisher(Node):
 
@@ -16,6 +17,9 @@ class VideoPublisher(Node):
     def __init__(self, input_source):
         super().__init__('video_publisher')
         self.using_rgbd = False # Not using RGB-D by default
+        self.printedDepth = False
+        self.printedPoint = False
+        self.printedImage = False
 
         self.publisher_ = self.create_publisher(Image, 'video_frame', 10)
 
@@ -35,6 +39,21 @@ class VideoPublisher(Node):
         )
         self.rgbd_subscription
 
+        self.depth_subscription = self.create_subscription(
+            Image,
+            '/camera/depth/image_raw',
+            self.depth_callback,
+            10
+        )
+
+        self.pointcloud_subscription = self.create_subscription(
+            PointCloud2,
+            '/camera/depth/points',
+            self.pointcloud_callback,
+            10
+        )
+
+
         self.frame_list = [] # To store frames for later processing
         
         self.bridge_ = CvBridge()
@@ -49,6 +68,16 @@ class VideoPublisher(Node):
             if self.video_capture.isOpened():
                 self.timer_ = self.create_timer(0.1, self.publish_frame)
 
+    def pointcloud_callback(self, msg):
+        if not self.printedPoint:
+            print(f"Received point cloud dimension: {msg.height} x {msg.width}")
+            self.printedPoint = True
+
+    def depth_callback(self, msg):
+        if not self.printedDepth:
+            print(f"Received depth message with dimension: {msg.height} x {msg.width}")
+            self.printedDepth = True
+
     def listener_callback(self, msg):
         
         data = msg.data
@@ -59,6 +88,9 @@ class VideoPublisher(Node):
         self.display_frame_with_bbox(bounding_boxes, timestamp_sec)
 
     def rgbd_callback(self, image):
+        if not self.printedImage:
+            print(f"Received image with dimension: {image.height} x {image.width}")
+            self.printedImage = True
         self.publish_frame(image) # Just publisht the frame received from RGB-D camera
 
     def publish_frame(self, msg=None):
@@ -79,7 +111,9 @@ class VideoPublisher(Node):
             msg.header.stamp = self.get_clock().now().to_msg()
             self.frame_list.append(msg) # Store the frame to the queue
             self.publisher_.publish(msg)
-
+        if self.frame_list.__sizeof__() > 10240:
+            self.frame_list = self.frame_list[math.floor(len(self.frame_list)/2):]
+            
     def display_frame_with_bbox(self, coordinates, timestamp):
 
         i = 0
